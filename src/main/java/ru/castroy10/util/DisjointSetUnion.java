@@ -1,6 +1,7 @@
 package ru.castroy10.util;
 
 public class DisjointSetUnion {
+
     private final int[] parent;
 
     public DisjointSetUnion(final int n) {

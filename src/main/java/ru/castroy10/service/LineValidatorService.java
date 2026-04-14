@@ -2,24 +2,15 @@ package ru.castroy10.service;
 
 public class LineValidatorService {
     public boolean isValid(final String line) {
-        int start = 0;
-        int next;
-        while ((next = line.indexOf(';', start)) != -1) {
-            if (hasOddQuotes(line, start, next)) {
+        int quoteCount = 0;
+        for (int i = 0; i < line.length(); i++) {
+            final char c = line.charAt(i);
+            if (c == '"') {
+                quoteCount++;
+            } else if (c == ';' && quoteCount % 2 != 0) {
                 return false;
             }
-            start = next + 1;
         }
-        return !hasOddQuotes(line, start, line.length());
-    }
-
-    private boolean hasOddQuotes(final String s, final int start, final int end) {
-        int count = 0;
-        for (int i = start; i < end; i++) {
-            if (s.charAt(i) == '"') {
-                count++;
-            }
-        }
-        return count % 2 != 0;
+        return quoteCount % 2 == 0;
     }
 }

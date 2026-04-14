@@ -1,7 +1,5 @@
 package ru.castroy10;
 
-import ru.castroy10.model.GroupDto;
-import ru.castroy10.model.RowDto;
 import ru.castroy10.service.FileService;
 import ru.castroy10.service.GroupingService;
 import ru.castroy10.service.LineParserService;
@@ -12,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class App {
 
@@ -31,30 +28,23 @@ public class App {
         }
 
         final FileService fileService = new FileService();
-        final LineValidatorService lineValidatorService = new LineValidatorService();
-        final LineParserService lineParserService = new LineParserService();
-        final GroupingService groupingService = new GroupingService();
+        final GroupingService groupingService = new GroupingService(
+                fileService,
+                new LineValidatorService(),
+                new LineParserService()
+        );
 
-        try (final Stream<String> lines = fileService.readLines(inputPath)) {
-            final List<RowDto> allRows = lines
-                    .filter(line -> !line.isBlank())
-                    .filter(lineValidatorService::isValid)
-                    .map(line -> new RowDto(line, lineParserService.parse(line)))
-                    .toList();
+        try {
+            final List<List<String>> groups = groupingService.process(inputPath);
 
-            if (allRows.isEmpty()) {
-                System.err.println("В файле отсутствуют корректные данные для обработки.");
+            if (groups.isEmpty()) {
+                System.out.println("Групп не найдено.");
                 return;
             }
 
-            final List<GroupDto> groups = groupingService.process(allRows);
-            final long countGroups = groups.stream()
-                                           .filter(g -> g.size() > 1)
-                                           .count();
+            fileService.writeGroups(groups);
 
-            fileService.writeGroups(groups, countGroups);
-
-            System.out.println("Групп > 1: " + countGroups);
+            System.out.println("Групп > 1: " + groups.size());
             final long duration = (System.currentTimeMillis() - startTime) / 1000;
             System.out.println("Время выполнения: " + duration + " сек.");
 
@@ -62,4 +52,5 @@ public class App {
             System.err.println("Ошибка при выполнении программы: " + e.getMessage());
         }
     }
+
 }
